@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.DS_Store
+assets/
+!assets/nyan_cat.png
+!assets/star.png

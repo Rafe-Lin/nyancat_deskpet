@@ -1,0 +1,16 @@
+@echo off
+echo Setting up Nyan Cat Pet...
+
+if not exist venv (
+    echo Creating virtual environment...
+    python -m venv venv
+)
+
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
+
+echo Installing dependencies...
+pip install -r requirements.txt
+
+echo Starting Nyan Cat...
+python main.py
