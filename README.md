@@ -3,42 +3,60 @@
 A cute Nyan Cat desktop pet that flies around your screen with a rainbow trail!
 
 ## Features
-- **Flying Nyan Cat**: Animated sprite.
-- **Rainbow Trail**: Colorful trail effect.
-- **Interactive**: Drag to move, right-click to quit.
-- **Cross-Platform**: Runs on Windows and MacOS.
+- **Flying Nyan Cat**: Animated sprite flying across the screen.
+- **Rainbow Trail**: A colorful, transparent, waving trail follows the cat.
+- **Interactive**:
+    - **Drag**: Click and drag the cat to move it.
+    - **3D Particles**: Click the cat to see a burst of 3D particles!
+    - **Auto-fly**: The cat flies automatically in a sine wave pattern when released.
+    - **Quit**: Right-click to access the context menu and quit.
 
-## Installation
+## Quick Start (Single Command)
 
-1. **Clone the repository** (or download the files).
-2. **Set up a virtual environment**:
+You can run the application with a single command. This script will automatically create the virtual environment, install dependencies, and start the pet.
 
-   **Windows**:
-   ```powershell
-   python -m venv venv
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-   **MacOS/Linux**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-**Windows**:
+### Windows
+Double-click `run.bat` or run it in the terminal:
 ```powershell
-python main.py
+.\run.bat
 ```
 
-**MacOS**:
+### MacOS / Linux
+Run the shell script:
 ```bash
-python main.py
+sh run.sh
 ```
+
+## Manual Installation
+
+If you prefer to set it up manually:
+
+1. **Create a virtual environment**:
+   ```bash
+   # Windows
+   python -m venv venv
+   # MacOS/Linux
+   python3 -m venv venv
+   ```
+
+2. **Activate the environment**:
+   ```bash
+   # Windows
+   .\venv\Scripts\activate
+   # MacOS/Linux
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the application**:
+   ```bash
+   python main.py
+   ```
 
 ## Troubleshooting
-- If the cat doesn't appear transparent, ensure your window manager supports transparency.
-- On MacOS, you might need to grant the terminal accessibility permissions if interaction is wonky.
+- **Cat shows as a checkerboard/box**: This means the transparency isn't working or the image is missing.
+- **Permission on MacOS**: If the cat doesn't move or respond, check System Preferences > Security & Privacy > Accessibility and allow your terminal app.
