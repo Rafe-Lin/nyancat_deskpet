@@ -2,8 +2,73 @@ import sys
 import random
 import math
 from PyQt6.QtWidgets import QWidget, QMenu, QApplication
-from PyQt6.QtCore import Qt, QTimer, QPoint, QRect
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QAction, QCursor, QBrush, QPen
+from PyQt6.QtCore import Qt, QTimer, QPoint, QRect, QPointF
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QAction, QCursor, QBrush, QPen, QRadialGradient, QConicalGradient, QFont
+
+class WorkStopperOverlay(QWidget):
+    def __init__(self, parent_pet):
+        super().__init__()
+        self.parent_pet = parent_pet
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
+                            Qt.WindowType.WindowStaysOnTopHint | 
+                            Qt.WindowType.Tool)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Cover the whole screen
+        screen = QApplication.primaryScreen().geometry()
+        self.setGeometry(screen)
+        
+        # Animation timer for disco effects
+        self.anim_timer = QTimer(self)
+        self.anim_timer.timeout.connect(self.update)
+        self.anim_timer.start(50)
+        
+        self.angle = 0
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # 1. Dim background
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
+        
+        # 2. Exaggerated Disco Lights (Conical Gradient)
+        center = self.rect().center()
+        gradient = QConicalGradient(QPointF(center), self.angle)
+        gradient.setColorAt(0.0, QColor(255, 0, 0, 100))
+        gradient.setColorAt(0.16, QColor(255, 255, 0, 100))
+        gradient.setColorAt(0.33, QColor(0, 255, 0, 100))
+        gradient.setColorAt(0.5, QColor(0, 255, 255, 100))
+        gradient.setColorAt(0.66, QColor(0, 0, 255, 100))
+        gradient.setColorAt(0.83, QColor(255, 0, 255, 100))
+        gradient.setColorAt(1.0, QColor(255, 0, 0, 100))
+        
+        painter.setBrush(QBrush(gradient))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRect(self.rect())
+        
+        # 3. Pulsing Text
+        self.angle = (self.angle + 5) % 360
+        scale = 1.0 + 0.1 * math.sin(self.angle * 0.1)
+        
+        font = QFont("Arial", 40, QFont.Weight.Bold)
+        painter.setFont(font)
+        painter.setPen(QColor(255, 255, 255))
+        
+        text = "STOP WORKING!\nPLAY WITH ME!"
+        text_rect = painter.boundingRect(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
+        
+        painter.translate(center)
+        painter.scale(scale, scale)
+        painter.translate(-center)
+        
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
+        
+    def mousePressEvent(self, event):
+        # Dismiss overlay
+        self.hide()
+        self.parent_pet.show()
+        self.parent_pet.activateWindow()
 
 class NyanCatPet(QWidget):
     def __init__(self):
@@ -59,6 +124,15 @@ class NyanCatPet(QWidget):
         # Initial position
         screen = QApplication.primaryScreen().geometry()
         self.move(screen.width() // 2, screen.height() // 2)
+
+        # Work Mode (Pomodoro)
+        self.work_timer = QTimer(self)
+        self.work_timer.setSingleShot(True)
+        self.work_timer.timeout.connect(self.return_from_work)
+        self.overlay = WorkStopperOverlay(self)
+        
+        self.start_drag_pos = QPoint()
+        self.is_drag_gesture = False
 
     def load_assets(self):
         try:
@@ -122,6 +196,19 @@ class NyanCatPet(QWidget):
             
         self.move(new_x, new_y)
 
+    def start_work_mode(self):
+        print("Starting work mode: See you in 25 minutes!")
+        self.hide()
+        # 25 minutes = 25 * 60 * 1000 ms
+        # For testing purposes, I'll set this to 5 seconds if you want to verify quickly, 
+        # but per requirements it is 25 minutes.
+        # self.work_timer.start(5000) # 5 seconds debug
+        self.work_timer.start(25 * 60 * 1000) 
+
+    def return_from_work(self):
+        self.overlay.showFullScreen()
+        # We don't show self here, the overlay will show self when clicked
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
@@ -171,7 +258,9 @@ class NyanCatPet(QWidget):
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.dragging = True
+            self.start_drag_pos = event.globalPosition().toPoint()
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.is_drag_gesture = False
             
             # Spawn 3D particles
             for _ in range(20):
@@ -192,10 +281,19 @@ class NyanCatPet(QWidget):
 
     def mouseMoveEvent(self, event):
         if self.dragging and event.buttons() & Qt.MouseButton.LeftButton:
-            self.move(event.globalPosition().toPoint() - self.drag_position)
+            current_pos = event.globalPosition().toPoint()
+            # If moved more than 5 pixels, consider it a drag
+            if (current_pos - self.start_drag_pos).manhattanLength() > 5:
+                self.is_drag_gesture = True
+                
+            self.move(current_pos - self.drag_position)
             event.accept()
 
     def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            if not self.is_drag_gesture:
+                # It was a click!
+                self.start_work_mode()
         self.dragging = False
 
     def show_context_menu(self, pos):
